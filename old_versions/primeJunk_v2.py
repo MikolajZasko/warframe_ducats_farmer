@@ -14,6 +14,7 @@ import time
 # (use with caution, too big number can corrupt the results, wf.market refuses to view too many sites at the same time)
 # number 2 seems to work fine, 3 is sometimes too much
 simultaneousThreads = 2
+debugging = True
 
 # amount of total prime parts concidered
 totalLinksLoaded = 15
@@ -35,9 +36,10 @@ class ScrapeThread(threading.Thread):
         self.data = None
   
     def run(self): 
-        print()
-        print("new prime part")
-        print()
+        if debugging:
+            print()
+            print("new prime part")
+            print()
 
         # Basic settings selenium/webdriver
         chromeOptions = webdriver.ChromeOptions()
@@ -57,7 +59,8 @@ class ScrapeThread(threading.Thread):
                 EC.presence_of_element_located((By.CLASS_NAME, "info-block--mRK0g"))
             )
         except:
-            print("works?")
+            if debugging:
+                print("works?")
 
         # check item price
 
@@ -105,7 +108,14 @@ class ScrapeThread(threading.Thread):
 
             msg = "[ducatAvg: " + str(round(ducatAvg,2)) + "] /w " + nick + " Hi! I want to buy: " + '"' + item + '"' + " for " + platPrice + " platinum. (warframe.market)"
 
+            if debugging:
+                print(msg)
+
             if (ducatAvg >= 22.5):
+
+                # Print the message to the console so it can be copied easily
+                print(msg)
+                
                 # Open the file in write mode ("w")
                 with open("deals2.txt", "a") as file:
                     # Write the variable to the file
@@ -146,7 +156,8 @@ try:
         EC.presence_of_element_located((By.TAG_NAME, "body"))
     )
 except:
-    print("works?")
+    if debugging:
+        print("works?")
     
 # Click the popup
 # popUp = driver.find_elements(By.XPATH, "//button[@class='ncmp__btn']")[0].click()
@@ -172,9 +183,10 @@ while (clickMore) :
     driver.execute_script("arguments[0].click();", ducatPlatButton)
     ducatPlatButtonClass = ducatPlatButton.get_dom_attribute("class")
 
-    print()
-    print(ducatPlatButtonClass)
-    print()
+    if debugging:
+        print()
+        print(ducatPlatButtonClass)
+        print()
 
     if (ducatPlatButtonClass == "sort-button--hEVZx small--of0QL down--wbjzK" or clicks >= 3):
         clickMore = False
@@ -215,12 +227,12 @@ for index, item in enumerate(offerList):
 # offerListLinks = list(filter(lambda a: a != '', offerListLinks))
 # ducatPricesList = list(filter(lambda a: a != '', ducatPricesList))
 
-
-print()
-print(offerListLinks)
-print()
-# print(ducatPricesList)
-# print()
+if debugging:
+    print()
+    print(offerListLinks)
+    print()
+    # print(ducatPricesList)
+    # print()
 
 
 # Make a list of links
