@@ -14,6 +14,9 @@ import json
 from config import settings
 from config import helper_functions
 
+# print the starting info
+helper_functions.prep_console()
+
 # initiate the main driver
 driver = webdriver.Chrome(options=settings.chromeOptions)
 driver.get(settings.warframe_market_url)

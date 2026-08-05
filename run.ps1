@@ -1,5 +1,5 @@
 # activate virtual environment
-.\venv\Scripts\activate.bat
+.\.venv\Scripts\activate
 
 # gather links using the first python script
 python primeJunk_get_links.py

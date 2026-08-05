@@ -91,9 +91,6 @@ with open(settings.item_links_path, "r", encoding="utf-8") as f:
 # divides all links into smaller batches (2 by default)
 batches = [links[i:i+settings.simultaneousThreads] for i in range(0, len(links), settings.simultaneousThreads)]
 
-# print the starting info
-helper_functions.prep_console()
-
 # starts the process of scraping in batches
 for sublist in batches:
     threads = []
