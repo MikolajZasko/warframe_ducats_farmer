@@ -19,7 +19,7 @@ warframe_market_url = "https://warframe.market/tools/ducats"
 save_desparate_deals = True
 
 # amount of total prime parts concidered
-totalLinksLoaded = 15
+totalLinksLoaded = 25
 
 # paths
 current_path = Path.cwd()
