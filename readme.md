@@ -44,9 +44,9 @@ Yes - playing games on Linux is possible BUT setting up the game itself requires
 .                             
 ├── config                    # config directory
 │   ├── helper_functions.py   # functions used in the project
-│   └── settings.py           # settings that change the behaviour of the project ⚙️
+│   └── settings.py           # ⚙️ settings that change the behaviour of the project 
 ├── data                      # data directory
-│   ├── deals.txt             # file containing [ducats gained per plat] + message to user 💰
+│   ├── deals.txt             # 💰 file containing [ducats gained per plat] + message to user 
 │   ├── deals_desperate.txt   # worse deals, open if desperate for ducats
 │   └── itemLinks.json        # links to items found https://warframe.market/tools/ducats - during the launch of the script
 ├── gfx                       # images used in the readme.md file
@@ -56,9 +56,9 @@ Yes - playing games on Linux is possible BUT setting up the game itself requires
 ├── testing                   # directory containing tests of separate functions in helper_functions.py
 │   └── ...                   # 
 ├── .gitignore                # specifies untracked files to ignore in Git
-├── primeJunk_get_links.py    # a script that gets links to items (ran first in the project 1️⃣)
-├── primeJunk_v3.py           # a script that scrapes the market in search of best deals (ran second in the project 2️⃣)
+├── primeJunk_get_links.py    # 1️⃣ a script that gets links to items (ran first in the project )
+├── primeJunk_v3.py           # 2️⃣ a script that scrapes the market in search of best deals (ran second in the project)
 ├── readme.md                 # this file
 ├── requirements.txt          # requirements for venv
-└── run.ps1                   # main entry point to the project 🚀
+└── run.ps1                   # 🚀 main entry point to the project 
 ```
