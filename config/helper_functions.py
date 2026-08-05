@@ -89,6 +89,17 @@ def get_item_name(url):
     return path_segments[-1]
 
 def parse_row(row : WebElement, item_name):
+    """parses a row found by selenium
+
+    Args:
+        row (WebElement): current row
+        item_name (str): item name found in url
+
+    Returns:
+        (int, str): a tuple - (price_in_plat, message)
+            price_in_plat: price in platinum for the prime part
+            message: message to the user ready to be pasted into warframe's ingame chat
+    """
 
     # get the price (in plat)
     price_in_plat_div = row.find_element(By.XPATH, ".//div[contains(@class, 'order-row__price--hn3HU')]") 
@@ -109,6 +120,8 @@ def parse_row(row : WebElement, item_name):
     return (int(price_in_plat),message)
 
 def prep_console():
+    """clears the console and prints info at the start of the program - the simplest UI the world has ever seen
+    """
 
     # clearing the console using some voodoo stuff from gemini
     subprocess.run("cls", shell=True)
@@ -119,5 +132,7 @@ def prep_console():
     print()
 
 def wait_for_enter_and_quit():
+    """waits for user to press enter then quits the python script
+    """
     while input("Press Enter to exit... ") != "":
         quit()
