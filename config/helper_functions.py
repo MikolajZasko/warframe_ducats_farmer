@@ -117,3 +117,7 @@ def prep_console():
     print()
     print("[ducats gained per plat - more = better]")
     print()
+
+def wait_for_enter_and_quit():
+    while input("Press Enter to exit... ") != "":
+        quit()

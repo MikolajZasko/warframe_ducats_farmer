@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import threading 
 import json
+import os
 
 # modules
 from config import settings
@@ -104,3 +105,6 @@ for sublist in batches:
     
     for t in threads: 
         t.join()
+
+# wait for user to press "enter"
+helper_functions.wait_for_enter()
