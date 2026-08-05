@@ -104,4 +104,4 @@ for sublist in batches:
         t.join()
 
 # wait for user to press "enter"
-helper_functions.wait_for_enter()
+helper_functions.wait_for_enter_and_quit()
