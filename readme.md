@@ -15,6 +15,9 @@ git clone https://github.com/MikolajZasko/warframe_ducats_farmer.git
 ```
 
 ```bash
+# go into the project's main directory
+cd warframe_ducats_farmer
+
 # create a .venv in the root directory of the repo, next to .gitignore
 python -m venv .venv
 
