@@ -42,7 +42,7 @@ Finds best current listings when it comes to plat -> ducats ratio. (listed on ht
 
 Yes - playing games on Linux is possible BUT setting up the game itself requires some "Translation" (Wine). The fact that a game can work on wine version X and crash on version X + 1 AND other inconsistencies when it comes to gaming on Linux makes the Linux version obsolete. The scraping process can be done on a Linux machine, but the data changes so quickly that saving it for later does not make any sense (the main usage of the tool for now is using python's "print" function and copying the output directly to the ingame chat - if you want to grab the best deals, you have to be quick 😎)
 
-## Fun fact 💡✨
+## Fun fact 1️⃣💡✨
 Apparently you can speed up the "startup process" of ps by using ps7 instead of default ps5.X (built in windows) like so (downloads PowerShell 7.X.X from microsoft - at the time of making this commit) :
 
 ```bash
@@ -54,6 +54,11 @@ After that, run the ps1 script using pwsh command (or using the pwsh from window
 pwsh.exe -NoExit -File "C:\path\to\ps1\script"
 ```
 
+## Fun fact 2️⃣💡✨
+Through gemini i found out that:
+```
+Best Approach: Do not build a web scraper to parse their raw web pages. Instead, send standard HTTP requests to their official endpoints ([https://api.warframe.market/v1/](https://api.warframe.market/v1/)...) while honoring their rate limits. Using the official API avoids Cloudflare blocks, prevents server overhead, and complies with community usage standards.
+```
 
 ## Project structure 🌳
 ```bash
