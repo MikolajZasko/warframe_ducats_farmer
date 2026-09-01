@@ -9,6 +9,12 @@ from selenium import webdriver
 import time
 from selenium.webdriver.common.by import By
 import json
+from pathlib import Path
+import sys
+
+# Get the root directory (parent of config and scripts directories) and add it to sys.path
+root_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(root_dir))
 
 # modules
 from config import settings
@@ -70,7 +76,13 @@ if settings.debugging:
 links = []
 
 for i in linksToItems:
-    links.append("https://warframe.market" + i)
+
+    link = "https://warframe.market" + i
+
+    # get just the "slug"
+    slug = i.split("/")[2]
+
+    links.append((link,slug))
 
 # save the results to the file
 with open(settings.item_links_path, "w", encoding="utf-8") as file:

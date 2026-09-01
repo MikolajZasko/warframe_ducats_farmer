@@ -1,3 +1,8 @@
+"""primeJunk_v3.py
+
+Scrapes the links provided by primeJunk_get_links.py
+"""
+
 # imports
 from selenium import webdriver
 from selenium.webdriver.common.by import By
