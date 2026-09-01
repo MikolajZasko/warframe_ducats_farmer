@@ -32,10 +32,12 @@ ITEMS_PER_PAGE = 20
 def fetch_item_info_button_action():
     subprocess.run([sys.executable, settings.scripts_path / "item_info_json_fetch.py"])
 
-# claude's idea
 def fetch_deals_button_action():
+    # Disable button & show small sidebar spinner
     fetch_deals_button.configure(state="disabled")
-    start_spinner()
+    button_progress_bar.pack(padx=10, pady=(0, 5))
+    button_progress_bar.start()
+
     thread = threading.Thread(
         target=run_prime_junk,
         daemon=True  # dies with the app, won't hang on exit
@@ -43,10 +45,18 @@ def fetch_deals_button_action():
     thread.start()
 
 #
-# other functions
+# script & UI sync functions
 #
 def run_prime_junk():
+    # Runs full script execution
     subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
+    # Re-enable button ONLY when script completely finishes
+    app.after(0, on_prime_junk_complete)
+
+def on_prime_junk_complete():
+    button_progress_bar.stop()
+    button_progress_bar.pack_forget()
+    fetch_deals_button.configure(state="normal")
 
 def watch_json_file():
     global last_mtime
@@ -56,10 +66,11 @@ def watch_json_file():
         mtime = os.path.getmtime(path)
         if mtime != last_mtime:
             last_mtime = mtime
+            start_json_spinner()
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             update_ui_with_data(data)
-            stop_spinner()
+            stop_json_spinner()
     except (FileNotFoundError, PermissionError):
         # Gracefully handle file read collisions on Windows
         pass
@@ -67,37 +78,21 @@ def watch_json_file():
     # check again in 10 seconds
     app.after(10000, watch_json_file)
 
-def copy_to_clipboard(text):
-    app.clipboard_clear()
-    app.clipboard_append(text)
-    app.update()  # keeps clipboard content after the app loses focus, needed on some platforms
-
-def start_spinner():
-    # Lock the button
-    fetch_deals_button.configure(state="disabled")
-
-    # Bottom status bar spinner
-    status_label.configure(text="Refreshing...")
+def start_json_spinner():
+    status_label.configure(text="Updating list...")
     progress_bar.pack(side="right", padx=(10, 0))
     progress_bar.start()
 
-    # Sidebar button spinner (appears under fetch_deals_button)
-    button_progress_bar.pack(fill="x", padx=0, pady=(0, 0))
-    button_progress_bar.start()
-
-def stop_spinner():
-    # Stop bottom status spinner
+def stop_json_spinner():
     progress_bar.stop()
     progress_bar.pack_forget()
     status_label.configure(text="Up to date ✓")
-
-    # # Stop sidebar button spinner
-    # button_progress_bar.stop()
-    # button_progress_bar.pack_forget()
-
-    # # Re-enable the button
-    # fetch_deals_button.configure(state="normal")
     app.after(2000, lambda: status_label.configure(text=""))
+
+def copy_to_clipboard(text):
+    app.clipboard_clear()
+    app.clipboard_append(text)
+    app.update()
 
 def update_ui_with_data(data):
     global current_data, current_page
@@ -117,7 +112,7 @@ def build_table_header():
         row=0, column=1, padx=10, pady=(5, 10), sticky="w"
     )
 
-# from slide menu to pages to avid lag when scrolling
+# from slide menu to pages to avoid lag when scrolling
 def populate_table():
     # Remove existing row widgets (keeping headers at index 0 and 1)
     for widget in table_frame.winfo_children()[2:]:
@@ -169,27 +164,11 @@ def next_page():
 app = customtkinter.CTk()
 app.geometry("1280x720")
 
-#
-# configure app look - claude
-#
-
 # --- configure main window grid ---
 app.grid_columnconfigure(0, weight=0)  # Sidebar fixed width
 app.grid_columnconfigure(1, weight=1)  # Table expands
 app.grid_rowconfigure(0, weight=1)     # Main content expands
 app.grid_rowconfigure(1, weight=0)     # Bottom control bar fixed
-
-#
-# table functions - claude
-#
-def build_table_header():
-    header_font = customtkinter.CTkFont(weight="bold")
-    customtkinter.CTkLabel(table_frame, text="Ducat AVG", font=header_font).grid(
-        row=0, column=0, padx=10, pady=(5, 10), sticky="w"
-    )
-    customtkinter.CTkLabel(table_frame, text="Message", font=header_font).grid(
-        row=0, column=1, padx=10, pady=(5, 10), sticky="w"
-    )
 
 # --- LEFT: sidebar with buttons ---
 sidebar = customtkinter.CTkFrame(app, width=160)
@@ -202,8 +181,8 @@ fetch_item_info_button.pack(fill="x", padx=10, pady=(10, 5))
 fetch_deals_button = customtkinter.CTkButton(sidebar, text="fetch links", command=fetch_deals_button_action)
 fetch_deals_button.pack(fill="x", padx=10, pady=5)
 
-# Dedicated spinner under the "fetch links" button
-button_progress_bar = customtkinter.CTkProgressBar(sidebar, mode="indeterminate", height=8)
+# Compact spinner directly under "fetch links" (width=120, height=6 prevents UI stretch)
+button_progress_bar = customtkinter.CTkProgressBar(sidebar, mode="indeterminate", width=120, height=6)
 
 # --- RIGHT: Table Frame ---
 table_frame = customtkinter.CTkFrame(app)
@@ -224,7 +203,7 @@ page_info_label.pack(side="left", padx=5)
 next_page_button = customtkinter.CTkButton(bottom_frame, text="Next >", width=60, command=next_page)
 next_page_button.pack(side="left", padx=(5, 0))
 
-# Status & Spinner widgets (Right aligned inside the same frame)
+# Status & Spinner widgets for JSON updates (Right aligned inside bottom bar)
 progress_bar = customtkinter.CTkProgressBar(bottom_frame, mode="indeterminate", width=120)
 
 status_label = customtkinter.CTkLabel(bottom_frame, text="")
