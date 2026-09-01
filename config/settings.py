@@ -27,6 +27,10 @@ data_path = current_path / "data"
 deals_path = data_path / "deals.txt"
 deals_desperate_path = data_path / "deals_desperate.txt"
 item_links_path = data_path / "itemLinks.json"
+item_info_path = data_path / "itemInfo.json"
+
+# api links
+item_info_link = "https://api.warframe.market/v2/items"
 
 #
 # Basic settings selenium/webdriver
