@@ -1,2 +1,6 @@
 .venv
 __pycache__
+
+# tmp messages
+deals.txt
+deals_desperate.txt
