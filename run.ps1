@@ -1,6 +1,9 @@
 # activate virtual environment
 .\.venv\Scripts\activate
 
+# prep console script
+python scripts/console_prep.py
+
 # gather items info using the first python script
 python scripts/item_info_json_fetch.py
 
