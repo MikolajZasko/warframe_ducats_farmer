@@ -1,4 +1,4 @@
-"""primeJunk_v3.py
+"""primeJunk_v4.py
 
 Gets all items found from itemIds.json and finds the best deals
 """
@@ -9,6 +9,7 @@ import json
 import sys
 import requests
 from pathlib import Path
+import time
 
 # Get the root directory (parent of config and scripts directories) and add it to sys.path
 root_dir = Path(__file__).resolve().parent.parent
@@ -18,6 +19,38 @@ sys.path.append(str(root_dir))
 from config import settings
 from config import helper_functions
 
+# variables
+deals = []
+
+#
+# thread logic - claude
+#
+
+class RateLimiter:
+    """Thread-safe rate limiter: allows `rate` calls per `per` seconds."""
+    def __init__(self, rate=3, per=1.0):
+        self.rate = rate
+        self.per = per
+        self.lock = threading.Lock()
+        self.timestamps = []
+
+    def acquire(self):
+        with self.lock:
+            now = time.monotonic()
+            # drop timestamps older than the window
+            self.timestamps = [t for t in self.timestamps if now - t < self.per]
+
+            if len(self.timestamps) >= self.rate:
+                # need to wait until the oldest call exits the window
+                sleep_time = self.per - (now - self.timestamps[0])
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                now = time.monotonic()
+                self.timestamps = [t for t in self.timestamps if now - t < self.per]
+
+            self.timestamps.append(now)
+
+# threading class
 class ScrapeThread(threading.Thread): 
     """class for threading - 1 thread = 1 item
 
@@ -54,6 +87,8 @@ class ScrapeThread(threading.Thread):
         # check if it has defined ducat price
         if self.ducats is not None:
 
+            rate_limiter.acquire()  # blocks until it's safe to make the request
+
             # get ALL orders with a given id
             response = requests.get( f"https://api.warframe.market/v2/orders/itemId/{self.id}" )
 
@@ -76,16 +111,40 @@ class ScrapeThread(threading.Thread):
 
                         message = f"/w {seller_nickname} Hi! I want to buy: \"{self.name}\" for {plat_price} platinum. (warframe.market)"
 
-                        # Print the message to the console so it can be copied easily,
-                        # include plat avg so we can find the best deals
-                        print(f"[ \033[1m{ducat_avg}\033[0m ]",message)
 
-                        # OPTIONAL: 
-                        # Open the file in write mode ("w")
-                        if settings.save_deals_to_file:
-                            with open(settings.deals_path, "a") as file:
-                                # Write the variable to the file
-                                file.write(message + "\n")
+                        if settings.debugging:
+                            # Print the message to the console so it can be copied easily,
+                            # include plat avg so we can find the best deals
+                            print(f"[ \033[1m{ducat_avg}\033[0m ]",message)
+
+                        # insert the deal to the right spot in the deals list
+                        current_index = 0
+                        obj_to_insert = {
+                            "ducat_avg": ducat_avg, 
+                            "message": message
+                        }
+
+                        insetred = False
+
+                        if len(deals) == 0:
+                            deals.append(obj_to_insert)
+                        else:
+                            while current_index != len(deals):
+                                if ducat_avg >= deals[current_index]["ducat_avg"]:
+                                    deals.insert(current_index, obj_to_insert)
+                                    insetred = True
+                                    break
+                                else:
+                                    current_index += 1
+
+                        if not insetred:
+                            deals.append(obj_to_insert)
+
+                        # save the list to the json file
+                        with open(settings.deals_json_path, "w", encoding="utf-8") as file:
+                            # Write the variable to the file
+                            json.dump(deals, file, indent=4)
+
                     else:
                         # OPTIONAL: 
                         # Open the file in write mode ("w")
@@ -112,6 +171,10 @@ items_list = list(items_info.values())
 batches = [items_list[i:i+settings.simultaneousThreads] for i in range(0, len(items_list), settings.simultaneousThreads)]
 
 # starts the process of scraping in batches
+
+# create ONE shared instance, used by all threads
+rate_limiter = RateLimiter(rate=3, per=1.0)
+
 for sublist in batches:
     threads = []
 
