@@ -4,11 +4,16 @@ Scrapes the links provided by primeJunk_get_links.py
 """
 
 # imports
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 import threading 
 import json
-import os
+import sys
+import requests
+from pathlib import Path
+
+# Get the root directory (parent of config and scripts directories) and add it to sys.path
+root_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(root_dir))
 
 # modules
 from config import settings
@@ -21,7 +26,7 @@ class ScrapeThread(threading.Thread):
         threading (Thread): Thread class
     """
 
-    def __init__(self, url:str): 
+    def __init__(self, item): 
         """initiates the class with url provided as str
 
         Args:
@@ -29,7 +34,8 @@ class ScrapeThread(threading.Thread):
         """
         
         threading.Thread.__init__(self) 
-        self.url = url
+        self.url = item["url"]
+        self.slug = item["slug"]
         self.driver = None
         self.page_source = None
         self.data = None
@@ -43,49 +49,49 @@ class ScrapeThread(threading.Thread):
             print("new prime part")
             print()
 
-        # initiate a selenium driver and get the url
-        driver = webdriver.Chrome(options=settings.chromeOptions) 
-        driver.get(self.url)  
+        # get top orders
+        response = requests.get( f"https://api.warframe.market/v2/orders/item/{self.slug}/top" )
 
-        # find ducats price for this item
-        ducats_price = helper_functions.get_ducats_price(driver)
+        data = response.json()
 
-        # get the item name
-        item_name = helper_functions.get_item_name(self.url)
+        sell_orders = data["data"]["sell"]
 
-        # get all rows
-        rows = driver.find_elements(By.XPATH, "//div[contains(@class, 'order-row--Alcph')]") 
+        # get the ducat price and in-game name for the prime part
+        ducats = items_info[self.slug]["ducats"]
+        in_game_name =  items_info[self.slug]["name"]
 
-        for row in rows:
+        for sell_order in sell_orders:
 
-            # get the price and message
-            price_in_plat, message = helper_functions.parse_row(row, item_name)
+            # check if ducats exist
+            if ducats is not None:
+                plat_price = sell_order["platinum"]
 
-            ducatAvg = int(ducats_price)/int(price_in_plat)
+                ducat_avg = ducats / plat_price
 
-            if settings.debugging:
-                print(message)
+                if ducat_avg >= 22.5:
 
-            if (ducatAvg >= 22.5):
+                    # compose a message
+                    seller_nickname = sell_order["user"]["ingameName"]
 
-                # Print the message to the console so it can be copied easily,
-                # include plat avg so we can find the best deals
-                print(f"[ \033[1m{ducatAvg}\033[0m ]",message)
-                
-                # Open the file in write mode ("w")
-                with open(settings.deals_path, "a") as file:
-                    # Write the variable to the file
-                    file.write(message + "\n")
-            else:
-                # Optional - save the desparate plat price into a file
-                if settings.save_desparate_deals:
-                    with open(settings.deals_desperate_path, "a") as file:
-                        # Write the variable to the file
-                        file.write(message + "\n")
+                    message = f"/w {seller_nickname} Hi! I want to buy: \"{in_game_name}\" for {plat_price} platinum. (warframe.market)"
 
-                break
+                    # Print the message to the console so it can be copied easily,
+                    # include plat avg so we can find the best deals
+                    print(f"[ \033[1m{ducat_avg}\033[0m ]",message)
 
-        driver.quit()
+                    # OPTIONAL: 
+                    # Open the file in write mode ("w")
+                    if settings.save_deals_to_file:
+                        with open(settings.deals_path, "a") as file:
+                            # Write the variable to the file
+                            file.write(message + "\n")
+                else:
+                    # OPTIONAL: 
+                    # Open the file in write mode ("w")
+                    if settings.save_desparate_deals:
+                        with open(settings.deals_desperate_path, "a") as file:
+                            # Write the variable to the file
+                            file.write(message + "\n")
 
 # gets links from the json file
 links = []
@@ -96,12 +102,18 @@ with open(settings.item_links_path, "r", encoding="utf-8") as f:
 # divides all links into smaller batches (2 by default)
 batches = [links[i:i+settings.simultaneousThreads] for i in range(0, len(links), settings.simultaneousThreads)]
 
+# load the info from item_info_path
+items_info = []
+
+with open(settings.item_info_path, "r", encoding="utf-8") as f:
+    items_info = json.load(f)
+
 # starts the process of scraping in batches
 for sublist in batches:
     threads = []
 
-    for url in sublist: 
-        t = ScrapeThread(url) 
+    for item in sublist: 
+        t = ScrapeThread(item) 
         t.start() 
         threads.append(t) 
     
