@@ -39,7 +39,8 @@ for item in data:
     items[slug] = {
         "id": item.get("id"),
         "ducats": item.get("ducats"), 
-        "tradingTax": item.get("tradingTax")
+        "tradingTax": item.get("tradingTax"),
+        "name": item.get("i18n").get("en").get("name")
     }
 
 # dump the info to the json file
