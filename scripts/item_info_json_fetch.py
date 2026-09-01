@@ -42,7 +42,8 @@ for item in data:
         "id": item.get("id"),
         "ducats": item.get("ducats"), 
         "tradingTax": item.get("tradingTax"),
-        "name": item.get("i18n").get("en").get("name")
+        "name": item.get("i18n").get("en").get("name"),
+        "slug": slug
     }
 
     ids.append(item.get("id"))
