@@ -1,11 +1,11 @@
-# Warframe Ducats Farmer 🧑‍🌾
+# Warframe Ducats Farmer 💰
 
 ## Overview 🗺️
-- Current stable version - v3 (Windows only)
+- Current stable version - v4 (Windows only)
 
-![overview](gfx/overview/1.png)
+![overview](gfx/overview/2.png)
 
-## How to start? (v3) - Windows 🪟
+## How to start? (v4) - Windows 🪟
 
 - use PowerShell
 
@@ -59,28 +59,32 @@ Through gemini i found out that:
 ```
 Best Approach: Do not build a web scraper to parse their raw web pages. Instead, send standard HTTP requests to their official endpoints ([https://api.warframe.market/v1/](https://api.warframe.market/v1/)...) while honoring their rate limits. Using the official API avoids Cloudflare blocks, prevents server overhead, and complies with community usage standards.
 ```
-Thanks to this discovery, I was able to completly abandon using selenium and use only the https://docs.warframe.market/docs/intro to speed up the process significantly
+Thanks to this discovery, I was able to completly abandon using selenium and use only the https://docs.warframe.market/docs/api/overview to speed up the process significantly
 
 ## Project structure 🌳
 ```bash
-.                             
-├── config                    # config directory
-│   ├── helper_functions.py   # functions used in the project
-│   └── settings.py           # ⚙️ settings that change the behaviour of the project 
-├── data                      # data directory
-│   ├── deals.txt             # 💰 file containing [ducats gained per plat] + message to user 
-│   ├── deals_desperate.txt   # worse deals, open if desperate for ducats
-│   └── itemLinks.json        # links to items found https://warframe.market/tools/ducats - during the launch of the script
-├── gfx                       # images used in the readme.md file
-│   └── ...                   # 
-├── old_versions              # old versions of the project
-│   └── ...                   # 
-├── testing                   # directory containing tests of separate functions in helper_functions.py
-│   └── ...                   # 
-├── .gitignore                # specifies untracked files to ignore in Git
-├── primeJunk_get_links.py    # 1️⃣ a script that gets links to items (ran first in the project )
-├── primeJunk_v3.py           # 2️⃣ a script that scrapes the market in search of best deals (ran second in the project)
-├── readme.md                 # this file
-├── requirements.txt          # requirements for venv
-└── run.ps1                   # 🚀 main entry point to the project 
+.
+├── config                       # 📂 config directory
+│   ├── helper_functions.py      # functions used in the project
+│   └── settings.py              # ⚙️ settings that change the behaviour of the project
+├── data                         # 📂 data directory
+│   ├── deals.json               # 💰 contains [ducats gained per plat] + message to user
+│   ├── itemIds.json             # 🆔 contains a list of all item ids
+│   ├── itemInfo.json            # ℹ️ contains item info
+│   └── itemLinks.json           # 🔗 links to items found https://warframe.market/tools/ducats - during the launch of the script
+├── gfx                          # images used in the readme.md file
+│   └── ...                      #
+├── old_versions                 # old versions of the scripts
+│   └── ...                      #
+├── scripts                      # 📂 scripts directory
+│   ├── item_info_json_fetch.py  # ℹ️ fetches the item info
+│   ├── primeJunk_v4.py          # 🧠 fetches the best deals - brain of the operation
+│   ├── simple_ui.py             # ✨ ui code
+│   └── tree_print.ps1           # 🌳 a tree function for powershell
+├── testing                      # 📂 testing directory
+│   └── ...                      # 
+├── .gitignore                   # specifies untracked files to ignore in Git
+├── readme.md                    # this file
+├── requirements.txt             # requirements for venv
+└── run.ps1                      # 🚀 main entry point to the project
 ```
