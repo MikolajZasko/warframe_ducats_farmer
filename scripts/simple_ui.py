@@ -24,7 +24,7 @@ from config import settings
 last_mtime = None
 current_data = []
 current_page = 0
-ITEMS_PER_PAGE = 20
+ITEMS_PER_PAGE = 19 # funny but this is the max amount of elements that fit on this resolution
 
 #
 # button functions
@@ -66,13 +66,20 @@ def watch_json_file():
         mtime = os.path.getmtime(path)
         if mtime != last_mtime:
             last_mtime = mtime
+            
+            # Show spinner & force Tkinter to immediately render it on screen
             start_json_spinner()
+            app.update_idletasks()
+
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            
             update_ui_with_data(data)
-            stop_json_spinner()
+            
+            # Hold spinner visible briefly so instantaneous loads are visible
+            app.after(600, stop_json_spinner)
     except (FileNotFoundError, PermissionError):
-        # Gracefully handle file read collisions on Windows
+        # Gracefully handle file read collisions or missing initial file
         pass
 
     # check again in 10 seconds
@@ -112,7 +119,6 @@ def build_table_header():
         row=0, column=1, padx=10, pady=(5, 10), sticky="w"
     )
 
-# from slide menu to pages to avoid lag when scrolling
 def populate_table():
     # Remove existing row widgets (keeping headers at index 0 and 1)
     for widget in table_frame.winfo_children()[2:]:
@@ -181,7 +187,7 @@ fetch_item_info_button.pack(fill="x", padx=10, pady=(10, 5))
 fetch_deals_button = customtkinter.CTkButton(sidebar, text="fetch links", command=fetch_deals_button_action)
 fetch_deals_button.pack(fill="x", padx=10, pady=5)
 
-# Compact spinner directly under "fetch links" (width=120, height=6 prevents UI stretch)
+# Compact spinner directly under "fetch links"
 button_progress_bar = customtkinter.CTkProgressBar(sidebar, mode="indeterminate", width=120, height=6)
 
 # --- RIGHT: Table Frame ---
@@ -189,7 +195,7 @@ table_frame = customtkinter.CTkFrame(app)
 table_frame.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=(10, 5))
 build_table_header()
 
-# --- BOTTOM RIGHT: Single Merged Controls & Status Frame ---
+# --- BOTTOM RIGHT: Controls & Status Frame ---
 bottom_frame = customtkinter.CTkFrame(app, fg_color="transparent")
 bottom_frame.grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=(0, 10))
 

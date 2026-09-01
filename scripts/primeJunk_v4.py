@@ -183,6 +183,3 @@ for sublist in batches:
     
     for t in threads: 
         t.join()
-
-# wait for user to press "enter"
-helper_functions.wait_for_enter_and_quit()
