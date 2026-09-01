@@ -2,6 +2,7 @@
 
 Makes a request to https://api.warframe.market/v2/items
 and creates itemInfo.json
+and itemIds.json
 """
 
 # imports
@@ -28,8 +29,9 @@ data = response.json()
 # go deeper in the api structure
 data = data["data"]
 
-# prep a dict for the info we need
+# prep a dict and a list for the info we need
 items = {}
+ids = []
 
 for item in data:
 
@@ -43,7 +45,11 @@ for item in data:
         "name": item.get("i18n").get("en").get("name")
     }
 
+    ids.append(item.get("id"))
+
 # dump the info to the json file
-# save the results to the file
 with open(settings.item_info_path, "w", encoding="utf-8") as file:
     json.dump(items, file, indent=4)
+
+with open(settings.item_ids_path, "w", encoding="utf-8") as file:
+    json.dump(ids, file, indent=4)

@@ -17,6 +17,7 @@ deals_path = data_path / "deals.txt"
 deals_desperate_path = data_path / "deals_desperate.txt"
 item_links_path = data_path / "itemLinks.json"
 item_info_path = data_path / "itemInfo.json"
+item_ids_path = data_path / "itemIds.json"
 
 # batches / theads / pages processed at a time 
 # (use with caution, too big number can corrupt the results, wf.market refuses to view too many sites at the same time)
