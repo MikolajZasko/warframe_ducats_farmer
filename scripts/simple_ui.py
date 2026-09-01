@@ -47,8 +47,6 @@ def fetch_deals_button_action():
 #
 def run_prime_junk():
     subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
-    # Safely schedule UI update on the main thread using "normal" instead of "enabled"
-    app.after(0, lambda: fetch_deals_button.configure(state="normal"))
 
 def watch_json_file():
     global last_mtime
@@ -75,15 +73,30 @@ def copy_to_clipboard(text):
     app.update()  # keeps clipboard content after the app loses focus, needed on some platforms
 
 def start_spinner():
+    # Lock the button
+    fetch_deals_button.configure(state="disabled")
+
+    # Bottom status bar spinner
     status_label.configure(text="Refreshing...")
     progress_bar.pack(side="right", padx=(10, 0))
     progress_bar.start()
 
+    # Sidebar button spinner (appears under fetch_deals_button)
+    button_progress_bar.pack(fill="x", padx=0, pady=(0, 0))
+    button_progress_bar.start()
+
 def stop_spinner():
+    # Stop bottom status spinner
     progress_bar.stop()
     progress_bar.pack_forget()
     status_label.configure(text="Up to date ✓")
-    fetch_deals_button.configure(state="normal")
+
+    # # Stop sidebar button spinner
+    # button_progress_bar.stop()
+    # button_progress_bar.pack_forget()
+
+    # # Re-enable the button
+    # fetch_deals_button.configure(state="normal")
     app.after(2000, lambda: status_label.configure(text=""))
 
 def update_ui_with_data(data):
@@ -182,6 +195,16 @@ def build_table_header():
 sidebar = customtkinter.CTkFrame(app, width=160)
 sidebar.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
 
+# Sidebar widgets
+fetch_item_info_button = customtkinter.CTkButton(sidebar, text="fetch item info", command=fetch_item_info_button_action)
+fetch_item_info_button.pack(fill="x", padx=10, pady=(10, 5))
+
+fetch_deals_button = customtkinter.CTkButton(sidebar, text="fetch links", command=fetch_deals_button_action)
+fetch_deals_button.pack(fill="x", padx=10, pady=5)
+
+# Dedicated spinner under the "fetch links" button
+button_progress_bar = customtkinter.CTkProgressBar(sidebar, mode="indeterminate", height=8)
+
 # --- RIGHT: Table Frame ---
 table_frame = customtkinter.CTkFrame(app)
 table_frame.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=(10, 5))
@@ -206,17 +229,6 @@ progress_bar = customtkinter.CTkProgressBar(bottom_frame, mode="indeterminate", 
 
 status_label = customtkinter.CTkLabel(bottom_frame, text="")
 status_label.pack(side="right", padx=5)
-
-#
-# app elements
-#
-fetch_item_info_button = customtkinter.CTkButton(sidebar, text="fetch item info", command=fetch_item_info_button_action)
-fetch_item_info_button.pack(fill="x", padx=10, pady=(10, 5))
-
-fetch_deals_button = customtkinter.CTkButton(sidebar, text="fetch links", command=fetch_deals_button_action)
-fetch_deals_button.pack(fill="x", padx=10, pady=5)
-
-build_table_header()
 
 app.after(0, watch_json_file)
 app.mainloop()
