@@ -34,12 +34,12 @@ items = {}
 for item in data:
 
     # get just the interesting data
-    id = item.get("id")
+    slug = item.get("slug")
 
-    items[id] = {
-        "slug": item.get("slug"),
-                "ducats": item.get("ducats"), 
-                "tradingTax": item.get("tradingTax")
+    items[slug] = {
+        "id": item.get("id"),
+        "ducats": item.get("ducats"), 
+        "tradingTax": item.get("tradingTax")
     }
 
 # dump the info to the json file
