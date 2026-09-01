@@ -15,17 +15,22 @@ from config import settings
 class DucatFarmerApp(customtkinter.CTk):
     def __init__(self):
         super().__init__()
+
+        # clear the deals.json file
+        with open(settings.deals_json_path, "w") as file:
+            json.dump({},file)
+
         self.geometry("1280x720")
-        self.title("Warframe Ducat Farmer")
+        self.title("Warframe Ducats Farmer 💰")
 
         # App State
         self.last_mtime = None
         self.current_data = []
         self.current_page = 0
-        self.ITEMS_PER_PAGE = 20
+        self.ITEMS_PER_PAGE = 19 # fits well DO NOT CHANGE
 
         self.setup_ui()
-        self.after(0, self.watch_json_file)
+        self.after(100, self.watch_json_file)
 
     def setup_ui(self):
         # --- Grid Config ---
@@ -41,8 +46,11 @@ class DucatFarmerApp(customtkinter.CTk):
         self.btn_info = customtkinter.CTkButton(self.sidebar, text="fetch item info", command=self.fetch_item_info_action)
         self.btn_info.pack(fill="x", padx=10, pady=(10, 5))
 
-        self.btn_deals = customtkinter.CTkButton(self.sidebar, text="fetch links", command=self.fetch_deals_action)
+        self.btn_deals = customtkinter.CTkButton(self.sidebar, text="fetch deals", command=self.fetch_deals_action)
         self.btn_deals.pack(fill="x", padx=10, pady=5)
+
+        self.btn_kill_deals = customtkinter.CTkButton(self.sidebar, text="kill deals process", command=self.kill_prime_junk)
+        self.btn_kill_deals.pack(fill="x", padx=10, pady=5)
 
         self.btn_progress = customtkinter.CTkProgressBar(self.sidebar, mode="indeterminate", width=120, height=6)
 
@@ -93,8 +101,17 @@ class DucatFarmerApp(customtkinter.CTk):
         threading.Thread(target=self.run_prime_junk, daemon=True).start()
 
     def run_prime_junk(self):
-        subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
+        self.prime_junk_subprocess = subprocess.Popen(
+            [sys.executable, settings.scripts_path / "primeJunk_v4.py"]
+        )
+
+        self.prime_junk_subprocess.wait()
+
         self.after(0, self.on_prime_junk_complete)
+
+    def kill_prime_junk(self):
+        self.prime_junk_subprocess.terminate()
+        self.on_prime_junk_complete()
 
     def on_prime_junk_complete(self):
         self.btn_progress.stop()
@@ -158,10 +175,23 @@ class DucatFarmerApp(customtkinter.CTk):
         page_items = self.current_data[start_idx:end_idx]
 
         for i, item in enumerate(page_items, start=1):
+            # extract data
             msg = item.get("message", "")
-            customtkinter.CTkLabel(self.table_frame, text=str(item.get("ducat_avg", ""))).grid(row=i, column=0, padx=10, pady=2, sticky="w")
+            ducat_avg = item.get("ducat_avg", "")
+
+            # decide which color to use
+            text_color = "yellow"
+
+            if ducat_avg != 22.5:
+                text_color = "green"
+
+            # add row contents
+            ducat_label = customtkinter.CTkLabel(self.table_frame, text=str(ducat_avg))
+            ducat_label.grid(row=i, column=0, padx=10, pady=2, sticky="w")
+            ducat_label.configure(text_color=text_color)
             
             msg_lbl = customtkinter.CTkLabel(self.table_frame, text=str(msg), cursor="hand2")
+            # msg_lbl.configure(text_color=text_color)
             msg_lbl.grid(row=i, column=1, padx=10, pady=2, sticky="w")
             msg_lbl.bind("<Button-1>", lambda e, m=msg: self.copy_to_clipboard(m))
 
@@ -205,11 +235,11 @@ class DucatFarmerApp(customtkinter.CTk):
         finally:
             self.goto_entry.delete(0, "end")
             
-        # Optional: Drop focus from the entry box after hitting Enter so arrow keys work again immediately
-        if event:
-            self.focus_set()
 
     def copy_to_clipboard(self, text):
         self.clipboard_clear()
         self.clipboard_append(text)
         self.update()
+
+app = DucatFarmerApp()
+app.mainloop()
