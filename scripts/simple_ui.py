@@ -1,9 +1,4 @@
-"""simple_ui.py
-
-Creates a simple ui using customtkinter
-"""
-
-# imports
+"""ui_app.py"""
 from pathlib import Path
 import sys
 import customtkinter
@@ -11,209 +6,196 @@ import subprocess
 import threading
 import os
 import json
-import time
 
-# Get the root directory (parent of config and scripts directories) and add it to sys.path
+# Path setup
 root_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(root_dir))
-
-# modules
 from config import settings
 
-# Global state
-last_mtime = None
-current_data = []
-current_page = 0
-ITEMS_PER_PAGE = 19 # funny but this is the max amount of elements that fit on this resolution
+class DucatFarmerApp(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("1280x720")
+        self.title("Warframe Ducat Farmer")
 
-#
-# button functions
-#
-def fetch_item_info_button_action():
-    subprocess.run([sys.executable, settings.scripts_path / "item_info_json_fetch.py"])
+        # App State
+        self.last_mtime = None
+        self.current_data = []
+        self.current_page = 0
+        self.ITEMS_PER_PAGE = 20
 
-def fetch_deals_button_action():
-    # Disable button & show small sidebar spinner
-    fetch_deals_button.configure(state="disabled")
-    button_progress_bar.pack(padx=10, pady=(0, 5))
-    button_progress_bar.start()
+        self.setup_ui()
+        self.after(0, self.watch_json_file)
 
-    thread = threading.Thread(
-        target=run_prime_junk,
-        daemon=True  # dies with the app, won't hang on exit
-    )
-    thread.start()
+    def setup_ui(self):
+        # --- Grid Config ---
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
 
-#
-# script & UI sync functions
-#
-def run_prime_junk():
-    # Runs full script execution
-    subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
-    # Re-enable button ONLY when script completely finishes
-    app.after(0, on_prime_junk_complete)
+        # --- LEFT: Sidebar ---
+        self.sidebar = customtkinter.CTkFrame(self, width=160)
+        self.sidebar.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
 
-def on_prime_junk_complete():
-    button_progress_bar.stop()
-    button_progress_bar.pack_forget()
-    fetch_deals_button.configure(state="normal")
+        self.btn_info = customtkinter.CTkButton(self.sidebar, text="fetch item info", command=self.fetch_item_info_action)
+        self.btn_info.pack(fill="x", padx=10, pady=(10, 5))
 
-def watch_json_file():
-    global last_mtime
-    path = settings.deals_json_path
+        self.btn_deals = customtkinter.CTkButton(self.sidebar, text="fetch links", command=self.fetch_deals_action)
+        self.btn_deals.pack(fill="x", padx=10, pady=5)
 
-    try:
-        mtime = os.path.getmtime(path)
-        if mtime != last_mtime:
-            last_mtime = mtime
+        self.btn_progress = customtkinter.CTkProgressBar(self.sidebar, mode="indeterminate", width=120, height=6)
+
+        # --- RIGHT: Table Frame ---
+        self.table_frame = customtkinter.CTkFrame(self)
+        self.table_frame.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=(10, 5))
+        self.build_table_header()
+
+        # --- BOTTOM RIGHT: Controls ---
+        self.bottom_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        self.bottom_frame.grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=(0, 10))
+
+        # Pagination controls
+        self.btn_prev = customtkinter.CTkButton(self.bottom_frame, text="< Prev", width=60, command=self.prev_page)
+        self.btn_prev.pack(side="left", padx=(0, 5))
+
+        self.page_info_label = customtkinter.CTkLabel(self.bottom_frame, text="Page 1 of 1")
+        self.page_info_label.pack(side="left", padx=5)
+
+        self.btn_next = customtkinter.CTkButton(self.bottom_frame, text="Next >", width=60, command=self.next_page)
+        self.btn_next.pack(side="left", padx=(5, 10))
+
+        # Go-To Page Controls
+        self.goto_entry = customtkinter.CTkEntry(self.bottom_frame, width=45, placeholder_text="#")
+        self.goto_entry.pack(side="left", padx=(0, 5))
+        
+        self.btn_goto = customtkinter.CTkButton(self.bottom_frame, text="Go", width=40, command=self.goto_page)
+        self.btn_goto.pack(side="left")
+
+        # Status & Spinner
+        self.progress_bar = customtkinter.CTkProgressBar(self.bottom_frame, mode="indeterminate", width=120)
+        self.status_label = customtkinter.CTkLabel(self.bottom_frame, text="")
+        self.status_label.pack(side="right", padx=5)
+
+    # --- Actions & Threads ---
+    def fetch_item_info_action(self):
+        subprocess.run([sys.executable, settings.scripts_path / "item_info_json_fetch.py"])
+
+    def fetch_deals_action(self):
+        self.btn_deals.configure(state="disabled")
+        self.btn_progress.pack(padx=10, pady=(0, 5))
+        self.btn_progress.start()
+        threading.Thread(target=self.run_prime_junk, daemon=True).start()
+
+    def run_prime_junk(self):
+        subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
+        self.after(100, self.on_prime_junk_complete)
+
+    def on_prime_junk_complete(self):
+        self.btn_progress.stop()
+        self.btn_progress.pack_forget()
+        self.btn_deals.configure(state="normal")
+
+    # --- JSON Watching ---
+    def watch_json_file(self):
+        path = settings.deals_json_path
+        try:
+            mtime = os.path.getmtime(path)
+            if mtime != self.last_mtime:
+                self.last_mtime = mtime
+                self.start_json_spinner()
+                self.update_idletasks()
+                
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self.update_ui_with_data(data)
+                self.after(600, self.stop_json_spinner)
+        except (FileNotFoundError, PermissionError):
+            pass
+        self.after(10000, self.watch_json_file)
+
+    def start_json_spinner(self):
+        self.status_label.configure(text="Updating list...")
+        self.progress_bar.pack(side="right", padx=(10, 0))
+        self.progress_bar.start()
+
+    def stop_json_spinner(self):
+        self.progress_bar.stop()
+        self.progress_bar.pack_forget()
+        self.status_label.configure(text="Up to date ✓")
+        self.after(2000, lambda: self.status_label.configure(text=""))
+
+    # --- Data & Table Management ---
+    def update_ui_with_data(self, data):
+        if isinstance(data, dict):
+            self.current_data = [{"ducat_avg": k, "message": v} for k, v in data.items()]
+        else:
+            self.current_data = data
+
+        # Remember page logic: prevent current_page from exceeding new data bounds
+        total_pages = max(1, (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+        if self.current_page >= total_pages:
+            self.current_page = total_pages - 1
+
+        self.populate_table()
+
+    def build_table_header(self):
+        header_font = customtkinter.CTkFont(weight="bold")
+        customtkinter.CTkLabel(self.table_frame, text="Ducat AVG", font=header_font).grid(row=0, column=0, padx=10, pady=(5, 10), sticky="w")
+        customtkinter.CTkLabel(self.table_frame, text="Message", font=header_font).grid(row=0, column=1, padx=10, pady=(5, 10), sticky="w")
+
+    def populate_table(self):
+        for widget in self.table_frame.winfo_children()[2:]:
+            widget.destroy()
+
+        start_idx = self.current_page * self.ITEMS_PER_PAGE
+        end_idx = start_idx + self.ITEMS_PER_PAGE
+        page_items = self.current_data[start_idx:end_idx]
+
+        for i, item in enumerate(page_items, start=1):
+            msg = item.get("message", "")
+            customtkinter.CTkLabel(self.table_frame, text=str(item.get("ducat_avg", ""))).grid(row=i, column=0, padx=10, pady=2, sticky="w")
             
-            # Show spinner & force Tkinter to immediately render it on screen
-            start_json_spinner()
-            app.update_idletasks()
+            msg_lbl = customtkinter.CTkLabel(self.table_frame, text=str(msg), cursor="hand2")
+            msg_lbl.grid(row=i, column=1, padx=10, pady=2, sticky="w")
+            msg_lbl.bind("<Button-1>", lambda e, m=msg: self.copy_to_clipboard(m))
 
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            
-            update_ui_with_data(data)
-            
-            # Hold spinner visible briefly so instantaneous loads are visible
-            app.after(600, stop_json_spinner)
-    except (FileNotFoundError, PermissionError):
-        # Gracefully handle file read collisions or missing initial file
-        pass
+        self.update_pagination_controls()
 
-    # check again in 10 seconds
-    app.after(10000, watch_json_file)
+    # --- Pagination & Utilities ---
+    def update_pagination_controls(self):
+        total_pages = max(1, (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+        self.page_info_label.configure(text=f"Page {self.current_page + 1} of {total_pages}")
+        self.btn_prev.configure(state="normal" if self.current_page > 0 else "disabled")
+        self.btn_next.configure(state="normal" if self.current_page < total_pages - 1 else "disabled")
 
-def start_json_spinner():
-    status_label.configure(text="Updating list...")
-    progress_bar.pack(side="right", padx=(10, 0))
-    progress_bar.start()
+    def prev_page(self):
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.populate_table()
 
-def stop_json_spinner():
-    progress_bar.stop()
-    progress_bar.pack_forget()
-    status_label.configure(text="Up to date ✓")
-    app.after(2000, lambda: status_label.configure(text=""))
+    def next_page(self):
+        total_pages = (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
+        if self.current_page < total_pages - 1:
+            self.current_page += 1
+            self.populate_table()
 
-def copy_to_clipboard(text):
-    app.clipboard_clear()
-    app.clipboard_append(text)
-    app.update()
+    def goto_page(self):
+        try:
+            target = int(self.goto_entry.get()) - 1
+            total_pages = max(1, (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+            if 0 <= target < total_pages:
+                self.current_page = target
+                self.populate_table()
+        except ValueError:
+            pass  # Ignore invalid string inputs
+        finally:
+            self.goto_entry.delete(0, "end")
 
-def update_ui_with_data(data):
-    global current_data, current_page
-    if isinstance(data, dict):
-        current_data = [{"ducat_avg": k, "message": v} for k, v in data.items()]
-    else:
-        current_data = data
-    current_page = 0
-    populate_table()
+    def copy_to_clipboard(self, text):
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.update()
 
-def build_table_header():
-    header_font = customtkinter.CTkFont(weight="bold")
-    customtkinter.CTkLabel(table_frame, text="Ducat AVG", font=header_font).grid(
-        row=0, column=0, padx=10, pady=(5, 10), sticky="w"
-    )
-    customtkinter.CTkLabel(table_frame, text="Message", font=header_font).grid(
-        row=0, column=1, padx=10, pady=(5, 10), sticky="w"
-    )
-
-def populate_table():
-    # Remove existing row widgets (keeping headers at index 0 and 1)
-    for widget in table_frame.winfo_children()[2:]:
-        widget.destroy()
-
-    start_idx = current_page * ITEMS_PER_PAGE
-    end_idx = start_idx + ITEMS_PER_PAGE
-    page_items = current_data[start_idx:end_idx]
-
-    for i, item in enumerate(page_items, start=1):
-        ducat_avg = item.get("ducat_avg", "")
-        message = item.get("message", "")
-
-        customtkinter.CTkLabel(table_frame, text=str(ducat_avg)).grid(
-            row=i, column=0, padx=10, pady=2, sticky="w"
-        )
-
-        message_label = customtkinter.CTkLabel(
-            table_frame, text=str(message), cursor="hand2"
-        )
-        message_label.grid(row=i, column=1, padx=10, pady=2, sticky="w")
-        message_label.bind("<Button-1>", lambda e, msg=message: copy_to_clipboard(msg))
-
-    update_pagination_controls()
-
-def update_pagination_controls():
-    total_pages = max(1, (len(current_data) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
-    page_info_label.configure(text=f"Page {current_page + 1} of {total_pages}")
-    
-    prev_page_button.configure(state="normal" if current_page > 0 else "disabled")
-    next_page_button.configure(state="normal" if current_page < total_pages - 1 else "disabled")
-
-def prev_page():
-    global current_page
-    if current_page > 0:
-        current_page -= 1
-        populate_table()
-
-def next_page():
-    global current_page
-    total_pages = (len(current_data) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
-    if current_page < total_pages - 1:
-        current_page += 1
-        populate_table()
-
-#
-# app settings
-#
-app = customtkinter.CTk()
-app.geometry("1280x720")
-
-# --- configure main window grid ---
-app.grid_columnconfigure(0, weight=0)  # Sidebar fixed width
-app.grid_columnconfigure(1, weight=1)  # Table expands
-app.grid_rowconfigure(0, weight=1)     # Main content expands
-app.grid_rowconfigure(1, weight=0)     # Bottom control bar fixed
-
-# --- LEFT: sidebar with buttons ---
-sidebar = customtkinter.CTkFrame(app, width=160)
-sidebar.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
-
-# Sidebar widgets
-fetch_item_info_button = customtkinter.CTkButton(sidebar, text="fetch item info", command=fetch_item_info_button_action)
-fetch_item_info_button.pack(fill="x", padx=10, pady=(10, 5))
-
-fetch_deals_button = customtkinter.CTkButton(sidebar, text="fetch links", command=fetch_deals_button_action)
-fetch_deals_button.pack(fill="x", padx=10, pady=5)
-
-# Compact spinner directly under "fetch links"
-button_progress_bar = customtkinter.CTkProgressBar(sidebar, mode="indeterminate", width=120, height=6)
-
-# --- RIGHT: Table Frame ---
-table_frame = customtkinter.CTkFrame(app)
-table_frame.grid(row=0, column=1, sticky="nsew", padx=(0, 10), pady=(10, 5))
-build_table_header()
-
-# --- BOTTOM RIGHT: Controls & Status Frame ---
-bottom_frame = customtkinter.CTkFrame(app, fg_color="transparent")
-bottom_frame.grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=(0, 10))
-
-# Pagination controls (Left aligned)
-prev_page_button = customtkinter.CTkButton(bottom_frame, text="< Prev", width=60, command=prev_page)
-prev_page_button.pack(side="left", padx=(0, 5))
-
-page_info_label = customtkinter.CTkLabel(bottom_frame, text="Page 1 of 1")
-page_info_label.pack(side="left", padx=5)
-
-next_page_button = customtkinter.CTkButton(bottom_frame, text="Next >", width=60, command=next_page)
-next_page_button.pack(side="left", padx=(5, 0))
-
-# Status & Spinner widgets for JSON updates (Right aligned inside bottom bar)
-progress_bar = customtkinter.CTkProgressBar(bottom_frame, mode="indeterminate", width=120)
-
-status_label = customtkinter.CTkLabel(bottom_frame, text="")
-status_label.pack(side="right", padx=5)
-
-app.after(0, watch_json_file)
+app = DucatFarmerApp()
 app.mainloop()
