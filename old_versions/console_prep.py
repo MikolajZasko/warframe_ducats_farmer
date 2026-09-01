@@ -1,4 +1,4 @@
-"""console_prep_.py
+"""console_prep.py
 
 Preps the console - first script lauched from the ps1 file - main entry point
 """

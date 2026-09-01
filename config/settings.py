@@ -3,7 +3,6 @@
 Defines the script behaviour - one place to modify functionality
 """
 
-from selenium import webdriver
 from pathlib import Path
 
 #
@@ -13,7 +12,8 @@ from pathlib import Path
 # paths
 current_path = Path.cwd()
 data_path = current_path / "data"
-deals_path = data_path / "deals.txt"
+scripts_path = current_path / "scripts"
+deals_json_path = data_path / "deals.json"
 deals_desperate_path = data_path / "deals_desperate.txt"
 item_links_path = data_path / "itemLinks.json"
 item_info_path = data_path / "itemInfo.json"
@@ -30,9 +30,6 @@ warframe_market_url = "https://warframe.market/tools/ducats"
 # amount of total prime parts concidered
 totalLinksLoaded = 20
 
-# if true, every time a good deal is found we save it to the deals_path file 
-save_deals_to_file = False
-
 # if true, every time a desperate deal is found we save it to the deals_desperate_path file 
 save_desparate_deals = False
 
@@ -40,13 +37,13 @@ save_desparate_deals = False
 # api links
 item_info_link = "https://api.warframe.market/v2/items"
 
-#
-# Basic settings selenium/webdriver
-#
-chromeOptions = webdriver.ChromeOptions()
-chromeOptions.add_experimental_option("prefs", {"download.default_directory": "C:\\Users\\babec\\Pobrane" })
-chromeOptions.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2 })
-chromeOptions.add_experimental_option('excludeSwitches', ['disable-popup-blocking'])
-chromeOptions.add_argument("--start-maximized")
-chromeOptions.add_argument('--window-size=3840,2160')
-chromeOptions.add_argument("--headless")
+# #
+# # Basic settings selenium/webdriver
+# #
+# chromeOptions = webdriver.ChromeOptions()
+# chromeOptions.add_experimental_option("prefs", {"download.default_directory": "C:\\Users\\babec\\Pobrane" })
+# chromeOptions.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2 })
+# chromeOptions.add_experimental_option('excludeSwitches', ['disable-popup-blocking'])
+# chromeOptions.add_argument("--start-maximized")
+# chromeOptions.add_argument('--window-size=3840,2160')
+# chromeOptions.add_argument("--headless")
