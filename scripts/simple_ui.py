@@ -77,6 +77,11 @@ class DucatFarmerApp(customtkinter.CTk):
         self.status_label = customtkinter.CTkLabel(self.bottom_frame, text="")
         self.status_label.pack(side="right", padx=5)
 
+        # --- KEYBOARD BINDINGS ---
+        self.goto_entry.bind("<Return>", self.goto_page)
+        self.bind("<Left>", self.prev_page)
+        self.bind("<Right>", self.next_page)
+
     # --- Actions & Threads ---
     def fetch_item_info_action(self):
         subprocess.run([sys.executable, settings.scripts_path / "item_info_json_fetch.py"])
@@ -89,7 +94,7 @@ class DucatFarmerApp(customtkinter.CTk):
 
     def run_prime_junk(self):
         subprocess.run([sys.executable, settings.scripts_path / "primeJunk_v4.py"])
-        self.after(100, self.on_prime_junk_complete)
+        self.after(0, self.on_prime_junk_complete)
 
     def on_prime_junk_complete(self):
         self.btn_progress.stop()
@@ -169,18 +174,26 @@ class DucatFarmerApp(customtkinter.CTk):
         self.btn_prev.configure(state="normal" if self.current_page > 0 else "disabled")
         self.btn_next.configure(state="normal" if self.current_page < total_pages - 1 else "disabled")
 
-    def prev_page(self):
+    def prev_page(self, event=None):
+        # Ignore global arrow key presses if the user is typing in the entry box
+        if event and self.focus_get() == self.goto_entry:
+            return
+            
         if self.current_page > 0:
             self.current_page -= 1
             self.populate_table()
 
-    def next_page(self):
+    def next_page(self, event=None):
+        # Ignore global arrow key presses if the user is typing in the entry box
+        if event and self.focus_get() == self.goto_entry:
+            return
+            
         total_pages = (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE
         if self.current_page < total_pages - 1:
             self.current_page += 1
             self.populate_table()
 
-    def goto_page(self):
+    def goto_page(self, event=None):
         try:
             target = int(self.goto_entry.get()) - 1
             total_pages = max(1, (len(self.current_data) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
@@ -191,11 +204,12 @@ class DucatFarmerApp(customtkinter.CTk):
             pass  # Ignore invalid string inputs
         finally:
             self.goto_entry.delete(0, "end")
+            
+        # Optional: Drop focus from the entry box after hitting Enter so arrow keys work again immediately
+        if event:
+            self.focus_set()
 
     def copy_to_clipboard(self, text):
         self.clipboard_clear()
         self.clipboard_append(text)
         self.update()
-
-app = DucatFarmerApp()
-app.mainloop()
