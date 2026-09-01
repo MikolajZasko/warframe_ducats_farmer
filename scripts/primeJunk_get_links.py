@@ -77,12 +77,16 @@ links = []
 
 for i in linksToItems:
 
-    link = "https://warframe.market" + i
+    url = "https://warframe.market" + i
 
     # get just the "slug"
     slug = i.split("/")[2]
 
-    links.append((link,slug))
+    links.append(
+        {
+            "url":url,
+            "slug":slug
+            })
 
 # save the results to the file
 with open(settings.item_links_path, "w", encoding="utf-8") as file:
