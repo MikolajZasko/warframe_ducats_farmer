@@ -86,7 +86,7 @@ for i in linksToItems:
         {
             "url":url,
             "slug":slug
-            })
+        })
 
 # save the results to the file
 with open(settings.item_links_path, "w", encoding="utf-8") as file:
