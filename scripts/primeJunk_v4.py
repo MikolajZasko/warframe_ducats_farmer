@@ -140,11 +140,6 @@ class ScrapeThread(threading.Thread):
                         if not insetred:
                             deals.append(obj_to_insert)
 
-                        # save the list to the json file
-                        with open(settings.deals_json_path, "w", encoding="utf-8") as file:
-                            # Write the variable to the file
-                            json.dump(deals, file, indent=4)
-
                     else:
                         # OPTIONAL: 
                         # Open the file in write mode ("w")
@@ -152,6 +147,9 @@ class ScrapeThread(threading.Thread):
                             with open(settings.deals_desperate_path, "a") as file:
                                 # Write the variable to the file
                                 file.write(message + "\n")
+
+            # save the list to the json file - after all offers from the item
+            helper_functions.save_json_atomic(settings.deals_json_path,deals)
 
 # gets ids from the json file
 ids = []

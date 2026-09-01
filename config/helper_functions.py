@@ -6,16 +6,31 @@ Helper functions used in:
 """
 
 # imports
-import re
 from urllib.parse import urlparse
 import subprocess
+import json
+import os
+import time
 
 # modules
-from . import settings
+
 
 #
 # helper functions
 #
+
+def save_json_atomic(path, data):
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+    
+    # Retry replacement if Windows has a temporary lock on deals.json
+    for _ in range(5):
+        try:
+            os.replace(tmp_path, path)
+            break
+        except PermissionError:
+            time.sleep(0.1)
 
 def get_item_name(url):
     """gets the item name from provided url
