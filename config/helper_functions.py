@@ -119,7 +119,7 @@ def parse_row(row : WebElement, item_name):
 
     return (int(price_in_plat),message)
 
-def prep_console():
+def get_links_prep_console():
     """clears the console and prints info at the start of the program - the simplest UI the world has ever seen
     """
 
@@ -130,6 +130,11 @@ def prep_console():
     print()
     print("[ducats gained per plat - more = better]")
     print()
+    print("ℹ️ Gathering links from https://warframe.market/tools/ducats ...")
+    print()
+
+def get_links_quit_info():
+    print("✅ Done! Making api requests ...")
 
 def wait_for_enter_and_quit():
     """waits for user to press enter then quits the python script

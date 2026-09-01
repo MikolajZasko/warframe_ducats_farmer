@@ -21,7 +21,7 @@ from config import settings
 from config import helper_functions
 
 # print the starting info
-helper_functions.prep_console()
+helper_functions.get_links_prep_console()
 
 # initiate the main driver
 driver = webdriver.Chrome(options=settings.chromeOptions)
@@ -93,3 +93,5 @@ with open(settings.item_links_path, "w", encoding="utf-8") as file:
     json.dump(links, file, indent=4)
 
 driver.close()
+
+helper_functions.get_links_quit_info()
