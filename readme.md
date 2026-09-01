@@ -59,6 +59,7 @@ Through gemini i found out that:
 ```
 Best Approach: Do not build a web scraper to parse their raw web pages. Instead, send standard HTTP requests to their official endpoints ([https://api.warframe.market/v1/](https://api.warframe.market/v1/)...) while honoring their rate limits. Using the official API avoids Cloudflare blocks, prevents server overhead, and complies with community usage standards.
 ```
+Thanks to this discovery, I was able to completly abandon using selenium and use only the https://docs.warframe.market/docs/intro to speed up the process significantly
 
 ## Project structure 🌳
 ```bash

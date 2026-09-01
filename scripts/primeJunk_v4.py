@@ -4,7 +4,6 @@ Gets all items found from itemIds.json and finds the best deals
 """
 
 # imports
-from selenium.webdriver.common.by import By
 import threading 
 import json
 import sys
