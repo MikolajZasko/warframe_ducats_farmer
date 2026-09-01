@@ -28,22 +28,19 @@ data = response.json()
 # go deeper in the api structure
 data = data["data"]
 
-print(data)
-
-# prep a list for the info we need
-items = []
+# prep a dict for the info we need
+items = {}
 
 for item in data:
 
     # get just the interesting data
-    items.append(
-        {
-            "id": item.get("id"),
+    id = item.get("id")
+
+    items[id] = {
         "slug": item.get("slug"),
-        "ducats": item.get("ducats"), 
-        "tradingTax": item.get("tradingTax"),
-        }
-    )
+                "ducats": item.get("ducats"), 
+                "tradingTax": item.get("tradingTax")
+    }
 
 # dump the info to the json file
 # save the results to the file
