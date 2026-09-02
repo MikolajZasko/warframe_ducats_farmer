@@ -28,6 +28,21 @@ python -m venv .venv
 .\run.ps1
 ```
 
+## How to use? (v4) 🤖
+
+Click the **fetch item info button** once in a while to get the info about the items (see itemInfo.json)
+
+Click the **fetch deals button** to start gathering deals, after a while the deals will appear in the item list.
+
+You can navigate through the list with buttons (prev/next) or go to a specificpage.
+
+Shortcuts available:
+- arrows **left/right** to go to prev/next page
+- **tab** to focus on the page input box
+- **enter** to confirm page change from the page input box
+
+When enough deals were fetched but you dont want to quit the program yet, click the **kill deals process button**, after a while the item list should stop refreshing
+
 # A deeper dive into the project 🥽
 
 ## Why was it created? 🤔
